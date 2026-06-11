@@ -1,0 +1,17 @@
+{
+  "name": "wardseva-marketing-intelligence",
+  "version": "1.0.0",
+  "description": "WardSeva Marketing Intelligence Platform",
+  "scripts": {
+    "install:all": "npm install && npm run install:backend && npm run install:frontend",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm start",
+    "dev:frontend": "cd frontend && npm run dev",
+    "seed": "cd backend && node etl.js"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
