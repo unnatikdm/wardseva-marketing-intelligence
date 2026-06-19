@@ -82,6 +82,10 @@ router.get('/dashboard/summary', authenticateToken, async (req, res) => {
     `;
     const dailyConversions = await db.query(dailyConversionsQuery);
 
+    const { GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_REFRESH_TOKEN } = process.env;
+    const isPlaceholder = (val) => !val || val.includes('your_') || val.includes('XXX-') || val.trim() === '';
+    const isDemo = isPlaceholder(GOOGLE_ADS_CLIENT_ID) || isPlaceholder(GOOGLE_ADS_REFRESH_TOKEN);
+
     res.json({
       kpis: {
         totalLeads,
@@ -92,7 +96,8 @@ router.get('/dashboard/summary', authenticateToken, async (req, res) => {
         conversionRate,
         roas
       },
-      dailyChart: dailyConversions.rows
+      dailyChart: dailyConversions.rows,
+      isDemo
     });
   } catch (error) {
     console.error('Summary error:', error);

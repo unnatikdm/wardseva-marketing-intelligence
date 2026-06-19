@@ -24,6 +24,7 @@ export default function App() {
 
   // Global Refresh State
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isDemo, setIsDemo] = useState(false);
 
   // Clear token on mount if expired
   useEffect(() => {
@@ -69,6 +70,21 @@ export default function App() {
   const triggerRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
   };
+
+  useEffect(() => {
+    if (token) {
+      fetch('/api/dashboard/summary', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && typeof data.isDemo === 'boolean') {
+            setIsDemo(data.isDemo);
+          }
+        })
+        .catch(err => console.error('Error checking demo status:', err));
+    }
+  }, [token, refreshTrigger]);
 
   // If not authenticated, render Login Page
   if (!token) {
@@ -161,6 +177,19 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Demo Mode / Live Connection Badge */}
+            {isDemo ? (
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-warning/15 border border-brand-warning/30 text-xs font-bold text-brand-warning">
+                <span className="h-2 w-2 rounded-full bg-brand-warning animate-pulse"></span>
+                <span>Demo Mode (Simulated Data)</span>
+              </div>
+            ) : (
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-success/15 border border-brand-success/30 text-xs font-bold text-brand-success">
+                <span className="h-2 w-2 rounded-full bg-brand-success"></span>
+                <span>Live API Connected</span>
+              </div>
+            )}
+
             {/* Quick Summary / Trigger Generator Indicator */}
             <div className="hidden lg:flex items-center gap-2 text-xs text-dark-muted font-medium bg-dark-panel/45 border border-dark-border px-4 py-2 rounded-xl">
               <Sparkles className="w-4 h-4 text-brand-purple" />
@@ -179,6 +208,22 @@ export default function App() {
 
         {/* View Switcher Container */}
         <section className="flex-1 p-8 space-y-8 max-w-7xl mx-auto w-full">
+          {isDemo && (
+            <div className="p-4 rounded-xl bg-brand-warning/10 border border-brand-warning/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-brand-warning text-xs font-medium animate-fadeIn">
+              <div>
+                <p className="font-bold text-white mb-0.5">⚠️ Google Ads API credentials not configured in Vercel environment.</p>
+                <p className="text-dark-muted">Showing simulated marketing metrics. To connect your live campaigns, configure your client credentials (client ID, client secret, refresh token, customer ID) in your Vercel Project Settings.</p>
+              </div>
+              <a 
+                href="https://vercel.com/unnatikadam50a-7917s-projects/wardseva-marketing-intelligence/settings/environment-variables"
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 bg-brand-warning/20 hover:bg-brand-warning/30 text-brand-warning font-bold rounded-lg border border-brand-warning/30 whitespace-nowrap transition-colors"
+              >
+                Configure Vercel Env
+              </a>
+            </div>
+          )}
           {activeTab === 'executive' && <ExecutiveView token={token} refreshTrigger={refreshTrigger} />}
           {activeTab === 'behavior' && <BehaviorView token={token} refreshTrigger={refreshTrigger} />}
           {activeTab === 'funnel' && <FunnelView token={token} refreshTrigger={refreshTrigger} />}
