@@ -16,7 +16,19 @@ if (isPostgres) {
   });
 } else {
   console.log('Database configuration: Falling back to local SQLite...');
-  const dbPath = path.join(__dirname, 'marketing_intelligence.db');
+  let dbPath = path.join(__dirname, 'marketing_intelligence.db');
+  if (process.env.VERCEL) {
+    const tmpDbPath = '/tmp/marketing_intelligence.db';
+    if (!fs.existsSync(tmpDbPath) && fs.existsSync(dbPath)) {
+      try {
+        fs.copyFileSync(dbPath, tmpDbPath);
+        console.log('Copied pre-seeded SQLite database to /tmp');
+      } catch (err) {
+        console.error('Failed to copy database to /tmp:', err.message);
+      }
+    }
+    dbPath = tmpDbPath;
+  }
   sqliteDb = new sqlite3.Database(dbPath, (err) => {
     if (err) {
       console.error('Error opening SQLite database:', err.message);
