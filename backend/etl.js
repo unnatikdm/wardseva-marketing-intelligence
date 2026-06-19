@@ -239,6 +239,7 @@ async function seedData() {
         type: 'geo',
         title: 'Increase Bidding Budget in Virar Region',
         recommendation: 'Virar leads demonstrate an exceptional conversion rate of 78% (23/29 leads converted to paying customers) yielding high average customer values. Recommend shifting 20% budget from Thane, which is displaying high lead volumes but sub-18% conversion rate.',
+        deep_dive: '### Statistical Rationale\n- **Hypothesis Testing**: A two-proportion z-test comparing Virar\'s conversion rate (79.3%) against Thane\'s conversion rate (17.5%) results in a p-value < 0.0001, confirming the performance difference is highly statistically significant.\n- **Resource Efficiency**: Thane has generated high inquiry volume but high bounce rates, indicating lower user intent or poor local targeting alignment. Shifting budget will optimize customer acquisition costs.\n- **CAC Reduction**: Shifting budget to Virar is projected to lower the average regional Customer Acquisition Cost (CAC) by over 60%.',
         impact_score: 9,
         status: 'Active'
       },
@@ -246,6 +247,7 @@ async function seedData() {
         type: 'schedule',
         title: 'Optimize Ad Bid Scheduling for 9 PM - 11 PM Peak',
         recommendation: 'Historical session conversions reveal a major peak between 9:00 PM and 11:00 PM (accounting for 42% of total lead conversions). Increase ad bids by +25% during this time window to capture high-intent evening traffic.',
+        deep_dive: '### Time Series & Behavior Analysis\n- **Conversion Density**: Analysis of lead timestamps reveals a prominent spike in submissions between 21:00 and 23:00, accounting for 42% of total conversions, compared to only 15% of traffic volume in that period.\n- **Decision Window**: Home healthcare decisions are deeply personal and discussed by family members after business hours. Bids during business hours yield high click volumes but lower direct conversion action.\n- **Bid Multiplier Strategy**: Implementing a +25% bid adjustment between 9 PM and 11 PM ensures maximum ad visibility in position #1, capturing searchers when they are most motivated.',
         impact_score: 8,
         status: 'Active'
       },
@@ -253,6 +255,7 @@ async function seedData() {
         type: 'keyword',
         title: 'Pause Underperforming Keyword: "cheap caregiver mumbai"',
         recommendation: 'The keyword "cheap caregiver mumbai" has consumed ₹18,600 in Google Ads spend but generated only 2 low-tier customers, resulting in a disastrous ROAS of 0.4x. Recommend immediately pausing this keyword and re-allocating funds to "icu care service virar".',
+        deep_dive: '### Keyword Yield & Intent Clustering\n- **Keyword Performance**: Cost: ₹18,600 | Revenue: ₹7,440 | ROAS: 0.4x. This keyword is currently operating at a significant net loss.\n- **Intent Analysis**: The search modifier "cheap" attracts budget-conscious users seeking simple domestic help rather than specialized medical care, leading to low qualified lead metrics.\n- **Resource Reallocation**: Pausing this keyword frees up ₹18,600 per month. Reallocating this budget to high-intent caregiver terms like "icu care service virar" (ROAS: 5.9x) is projected to generate an additional ₹110,000 in monthly revenue.',
         impact_score: 9,
         status: 'Active'
       },
@@ -260,6 +263,7 @@ async function seedData() {
         type: 'budget',
         title: 'Scale High ROAS ICU Care Campaign',
         recommendation: 'The "ICU Care" campaign has generated ₹2,84,000 in revenue from a spend of ₹48,000, producing a return on ad spend (ROAS) of 5.9x. Expand the daily campaign budget by 20% to capture additional search volume.',
+        deep_dive: '### Elasticity & ROI Scale Analysis\n- **Campaign Performance**: Spend: ₹48,000 | Revenue: ₹2,84,000 | ROAS: 5.92x. Lead-to-customer conversion is outstanding at 48%.\n- **Market Opportunity**: Google Search Impression Share is currently at 65% for this campaign, indicating 35% of eligible search volume is lost due to budget constraints.\n- **Financial Outlook**: With a marginal ROAS of 5.9x, scaling the budget by 20% is highly efficient. This expansion is expected to generate an additional ₹56,800 in revenue with minimal risk of performance decay.',
         impact_score: 10,
         status: 'Active'
       }
@@ -267,9 +271,9 @@ async function seedData() {
 
     for (const rec of defaultRecs) {
       await db.query(
-        `INSERT INTO ai_recommendations (type, title, recommendation, impact_score, status)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [rec.type, rec.title, rec.recommendation, rec.impact_score, rec.status]
+        `INSERT INTO ai_recommendations (type, title, recommendation, deep_dive, impact_score, status)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [rec.type, rec.title, rec.recommendation, rec.deep_dive, rec.impact_score, rec.status]
       );
     }
 
@@ -321,6 +325,10 @@ async function renewGoogleAccessToken(clientId, clientSecret, refreshToken) {
   }
 }
 
+function isPlaceholder(value) {
+  return !value || value.trim() === '' || value.includes('your_') || value.includes('XXX-') || value.includes('pub-XXXX');
+}
+
 /**
  * Fetch and sync report metrics from Google AdSense API
  * Endpoint: https://adsense.googleapis.com/v2/accounts/{accountId}/reports:generate
@@ -333,8 +341,13 @@ async function syncAdSenseData() {
     ADSENSE_ACCOUNT_ID 
   } = process.env;
 
-  if (!ADSENSE_CLIENT_ID || !ADSENSE_CLIENT_SECRET || !ADSENSE_REFRESH_TOKEN || !ADSENSE_ACCOUNT_ID) {
-    console.log('[ETL Pipeline] Google AdSense API credentials missing from environment. Using simulated data.');
+  if (
+    isPlaceholder(ADSENSE_CLIENT_ID) ||
+    isPlaceholder(ADSENSE_CLIENT_SECRET) ||
+    isPlaceholder(ADSENSE_REFRESH_TOKEN) ||
+    isPlaceholder(ADSENSE_ACCOUNT_ID)
+  ) {
+    console.log('[ETL Pipeline] Google AdSense API credentials missing or using placeholder values from environment. Using simulated data.');
     return null;
   }
 
@@ -388,8 +401,14 @@ async function syncGoogleAdsData() {
     GOOGLE_ADS_CUSTOMER_ID
   } = process.env;
 
-  if (!GOOGLE_ADS_DEVELOPER_TOKEN || !GOOGLE_ADS_CLIENT_ID || !GOOGLE_ADS_CLIENT_SECRET || !GOOGLE_ADS_REFRESH_TOKEN || !GOOGLE_ADS_CUSTOMER_ID) {
-    console.log('[ETL Pipeline] Google Ads API credentials missing from environment. Using simulated data.');
+  if (
+    isPlaceholder(GOOGLE_ADS_DEVELOPER_TOKEN) ||
+    isPlaceholder(GOOGLE_ADS_CLIENT_ID) ||
+    isPlaceholder(GOOGLE_ADS_CLIENT_SECRET) ||
+    isPlaceholder(GOOGLE_ADS_REFRESH_TOKEN) ||
+    isPlaceholder(GOOGLE_ADS_CUSTOMER_ID)
+  ) {
+    console.log('[ETL Pipeline] Google Ads API credentials missing or using placeholder values from environment. Using simulated data.');
     return null;
   }
 

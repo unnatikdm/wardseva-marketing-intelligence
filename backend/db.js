@@ -136,6 +136,7 @@ async function initDatabase() {
         type VARCHAR(100) NOT NULL, -- 'budget', 'keyword', 'schedule', 'geo'
         title VARCHAR(255) NOT NULL,
         recommendation TEXT NOT NULL,
+        deep_dive TEXT,
         impact_score INTEGER DEFAULT 5, -- 1-10 scale
         status VARCHAR(50) DEFAULT 'Active', -- 'Active', 'Applied', 'Dismissed'
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -195,6 +196,7 @@ async function initDatabase() {
         type VARCHAR(100) NOT NULL,
         title VARCHAR(255) NOT NULL,
         recommendation TEXT NOT NULL,
+        deep_dive TEXT,
         impact_score INTEGER DEFAULT 5,
         status VARCHAR(50) DEFAULT 'Active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP

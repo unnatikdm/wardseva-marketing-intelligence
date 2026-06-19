@@ -11,12 +11,51 @@ import {
   RotateCw
 } from 'lucide-react';
 
+function renderMarkdown(text) {
+  if (!text) return null;
+  const lines = text.split('\n');
+  return lines.map((line, idx) => {
+    let content = line.trim();
+    if (content.startsWith('###')) {
+      return <h4 key={idx} className="text-sm font-bold text-white mt-4 mb-2 tracking-wide">{content.replace('###', '').trim()}</h4>;
+    }
+    if (content.startsWith('-')) {
+      const cleanLi = content.substring(1).trim();
+      // Replace **text** with bold tags
+      const parts = cleanLi.split('**');
+      const renderedParts = parts.map((part, pIdx) => {
+        if (pIdx % 2 === 1) {
+          return <strong key={pIdx} className="text-white font-bold">{part}</strong>;
+        }
+        return part;
+      });
+      return (
+        <li key={idx} className="list-disc ml-5 text-[11px] text-dark-muted leading-relaxed mb-2 font-medium">
+          {renderedParts}
+        </li>
+      );
+    }
+    if (content === '') return <div key={idx} className="h-2"></div>;
+    
+    // Default paragraph
+    const parts = content.split('**');
+    const renderedParts = parts.map((part, pIdx) => {
+      if (pIdx % 2 === 1) {
+        return <strong key={pIdx} className="text-white font-bold">{part}</strong>;
+      }
+      return part;
+    });
+    return <p key={idx} className="text-[11px] text-dark-muted leading-relaxed mb-2 font-medium">{renderedParts}</p>;
+  });
+}
+
 export default function RecommendationsView({ token, refreshTrigger }) {
   const [recs, setRecs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [genLoading, setGenLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedRec, setSelectedRec] = useState(null);
 
   const fetchRecs = () => {
     setLoading(true);
@@ -219,11 +258,11 @@ export default function RecommendationsView({ token, refreshTrigger }) {
                       Dismiss
                     </button>
                     <button
-                      onClick={() => handleApply(rec.id)}
-                      disabled={actionLoading}
-                      className="px-4 py-2 rounded-xl bg-brand-primary hover:bg-brand-primary/85 text-xs font-bold text-white shadow-md shadow-brand-primary/20 transition-all duration-150"
+                      onClick={() => setSelectedRec(rec)}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-brand-primary to-brand-purple hover:brightness-110 text-xs font-bold text-white shadow-md shadow-brand-primary/20 transition-all duration-150 flex items-center gap-1.5"
                     >
-                      Apply Action
+                      <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                      <span>Deep Dive</span>
                     </button>
                   </div>
                 </div>
@@ -267,6 +306,70 @@ export default function RecommendationsView({ token, refreshTrigger }) {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+      {/* Deep Dive Modal */}
+      {selectedRec && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-[#151D30]/95 border border-[#222F4C] rounded-2xl max-w-xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col justify-between overflow-hidden">
+            {/* Header */}
+            <div className="flex justify-between items-start pb-4 border-b border-[#222F4C]">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl border ${getRecColor(selectedRec.type)}`}>
+                  {React.createElement(getRecIcon(selectedRec.type), { className: "w-5 h-5" })}
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">Data Science Audit</h4>
+                  <h3 className="text-md font-bold text-white leading-tight mt-0.5">{selectedRec.title}</h3>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedRec(null)}
+                className="text-[#9CA3AF] hover:text-white transition-colors duration-150 p-1"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="my-5 overflow-y-auto pr-2 space-y-4 max-h-[50vh]">
+              {/* Recommendation Summary */}
+              <div className="p-4 rounded-xl bg-[#0B0F19]/50 border border-[#222F4C]/60">
+                <h5 className="text-[10px] font-bold text-[#0ea5e9] uppercase tracking-wider mb-2">Recommendation Summary</h5>
+                <p className="text-[11px] text-[#9CA3AF] leading-relaxed font-medium">
+                  {selectedRec.recommendation}
+                </p>
+              </div>
+
+              {/* Data Science Deep Dive Details */}
+              <div className="space-y-3">
+                <h5 className="text-[10px] font-bold text-[#6366f1] uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Data Science Rationale</span>
+                </h5>
+                <div className="space-y-3 font-sans">
+                  {renderMarkdown(selectedRec.deep_dive || "No deep dive analysis available for this recommendation.")}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-4 border-t border-[#222F4C] flex justify-between items-center">
+              <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full ${
+                selectedRec.impact_score >= 9 
+                  ? 'bg-brand-danger/10 text-brand-danger border border-brand-danger/20' 
+                  : 'bg-brand-warning/10 text-brand-warning border border-brand-warning/20'
+              }`}>
+                Priority Impact: {selectedRec.impact_score}/10
+              </span>
+              <button
+                onClick={() => setSelectedRec(null)}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary hover:brightness-110 text-xs font-bold text-white shadow-md shadow-brand-primary/20 transition-all duration-150"
+              >
+                Close Audit
+              </button>
+            </div>
           </div>
         </div>
       )}
